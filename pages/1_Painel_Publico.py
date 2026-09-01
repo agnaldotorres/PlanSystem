@@ -4,7 +4,7 @@ import json
 import os
 
 st.set_page_config(
-    page_title="Painel de Aquecimento",
+    page_title="Painel Visitas com Agendamento",
     page_icon="📊",
     layout="wide"
 )
@@ -22,7 +22,7 @@ ARQUIVO_RESULTADO = os.path.join(PASTA_DADOS, "ultimo_resultado.json")
 # -----------------------------------------------------------------
 st.markdown('<meta http-equiv="refresh" content="30">', unsafe_allow_html=True)
 
-st.title("🔥 Painel de Aquecimento")
+st.title("🔥 Painel Visitas com Agendamento")
 
 if not os.path.exists(ARQUIVO_RESULTADO):
     st.warning(
@@ -43,10 +43,25 @@ else:
 
     ranking = pd.DataFrame(resultado["ranking"]).set_index("Posição")
 
-    st.subheader("🏆 Ranking dos Aquecedores")
-    st.dataframe(ranking, use_container_width=True)
+    st.subheader("🏆 Ranking de Visitas em loja")
+
+    if "Atingiu Meta" in ranking.columns:
+
+        def destacar_meta(row):
+            estilos = [""] * len(row)
+            if row.get("Atingiu Meta"):
+                idx = row.index.get_loc("Aquecedor")
+                estilos[idx] = "color: #16a34a; font-weight: 800;"
+            return estilos
+
+        st.dataframe(
+            ranking.style.apply(destacar_meta, axis=1),
+            use_container_width=True,
+        )
+    else:
+        st.dataframe(ranking, use_container_width=True)
 
     st.subheader("📊 Visitas Agendadas por Aquecedor")
-    st.bar_chart(ranking.set_index("Aquecedor"))
+    st.bar_chart(ranking.set_index("Aquecedor")["Quantidade"])
 
     st.caption("Esta página se atualiza automaticamente a cada 30 segundos.")

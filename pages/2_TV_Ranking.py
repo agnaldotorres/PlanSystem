@@ -4,7 +4,7 @@ import os
 from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(
-    page_title="Ranking de Aquecimento - TV",
+    page_title="Ranking de Visitas em Loja - TV",
     page_icon="🔥",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -94,6 +94,14 @@ st.markdown(
             color: #ffffff;
             letter-spacing: 0.5px;
         }
+        .tv-name.meta-atingida {
+            color: #22c55e;
+            text-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+        }
+        .tv-name.meta-atingida::after {
+            content: " ✅";
+            font-size: 1.2rem;
+        }
         .tv-value {
             font-size: 1.8rem;
             font-weight: 900;
@@ -110,7 +118,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown('<div class="tv-title">🔥 RANKING DE AQUECIMENTO</div>', unsafe_allow_html=True)
+st.markdown('<div class="tv-title">🔥 RANKING DE VISITAS EM LOJA</div>', unsafe_allow_html=True)
 
 if not os.path.exists(ARQUIVO_RESULTADO):
     st.markdown(
@@ -133,11 +141,19 @@ else:
 
     linhas_html = ""
     for item in resultado["ranking"]:
+        # -----------------------------------------------------------------
+        # Se o resultado publicado tiver a coluna "Atingiu Meta" (planilhas
+        # que possuem a coluna "Empresa"), o nome do aquecedor aparece em
+        # verde com um ✅ quando ele bateu a meta da empresa dele.
+        # -----------------------------------------------------------------
+        atingiu = bool(item.get("Atingiu Meta"))
+        classe_nome = "tv-name meta-atingida" if atingiu else "tv-name"
+
         linhas_html += f"""
         <div class="tv-row">
             <div class="tv-pos">{item['Posição']}</div>
             <div class="tv-bar">
-                <div class="tv-name">{item['Aquecedor']}</div>
+                <div class="{classe_nome}">{item['Aquecedor']}</div>
                 <div class="tv-value">{item['Quantidade']}</div>
             </div>
         </div>
