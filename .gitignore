@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.xlsx
+*.xls
+dados/ultimo_resultado.json
