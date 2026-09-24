@@ -8,6 +8,33 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 
+def login_admin():
+    st.title("🔐 Acesso Administrativo")
+    st.write("Informe suas credenciais para acessar o painel.")
+
+    usuario = st.text_input("👤 Usuário")
+    senha = st.text_input("🔑 Senha", type="password")
+
+    if st.button("🚀 Entrar", width="stretch"):
+        if (
+            usuario == st.secrets["admin_usuario"]
+            and senha == st.secrets["admin_senha"]
+        ):
+            st.session_state["admin_logado"] = True
+            st.rerun()
+        else:
+            st.error("❌ Usuário ou senha incorretos.")
+
+    st.stop()
+
+
+if "admin_logado" not in st.session_state:
+    st.session_state["admin_logado"] = False
+
+
+if not st.session_state["admin_logado"]:
+    login_admin()
+
 def normalizar(texto):
     """Remove acentos, espaços extras e deixa em maiúsculas, para comparar
     textos de forma robusta (ex: 'Prospecção Feirão' == 'PROSPECCAO FEIRAO')."""
@@ -240,10 +267,10 @@ if arquivo is not None:
 
             st.dataframe(
                 ranking.style.apply(destacar_meta, axis=1),
-                use_container_width=True,
+                width="stretch",
             )
         else:
-            st.dataframe(ranking, use_container_width=True)
+            st.dataframe(ranking, width="stretch")
 
         st.subheader("📊 Visitas Agendadas por Aquecedor")
         st.bar_chart(ranking.set_index("Aquecedor")["Quantidade"])

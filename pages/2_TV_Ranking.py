@@ -1,10 +1,9 @@
 import streamlit as st
 import json
 import os
-from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(
-    page_title="Ranking de Visitas em Loja - TV",
+    page_title="Ranking de Visitas em Loja",
     page_icon="🔥",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -14,15 +13,9 @@ PASTA_DADOS = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dados")
 ARQUIVO_RESULTADO = os.path.join(PASTA_DADOS, "ultimo_resultado.json")
 
 # -----------------------------------------------------------------
-# Atualiza a página sozinha a cada 30s SEM recarregar/navegar o
-# navegador — é o próprio Streamlit que reexecuta o script e
-# atualiza a tela por dentro. A URL nunca muda e não sai da página.
-# -----------------------------------------------------------------
-st_autorefresh(interval=30_000, key="tv_autorefresh")
-
-# -----------------------------------------------------------------
 # CSS: esconde menu lateral, cabeçalho e rodapé do Streamlit para
 # ocupar a tela toda na TV, e estiliza como um placar de ranking.
+# Fica FORA do fragment porque não muda a cada atualização.
 # -----------------------------------------------------------------
 st.markdown(
     """
@@ -120,12 +113,23 @@ st.markdown(
 
 st.markdown('<div class="tv-title">🔥 RANKING DE VISITAS EM LOJA</div>', unsafe_allow_html=True)
 
-if not os.path.exists(ARQUIVO_RESULTADO):
-    st.markdown(
-        '<div class="tv-empty">Nenhum resultado publicado ainda.</div>',
-        unsafe_allow_html=True,
-    )
-else:
+
+# -----------------------------------------------------------------
+# Fragment nativo do Streamlit: só este bloco reroda a cada 30s,
+# isolado do resto da página. Diferente do streamlit_autorefresh,
+# ele não depende de reconexão de WebSocket nem de navegação de
+# página, então não corre o risco de "voltar pra home" se a sessão
+# cair — o Streamlit trata isso internamente sem sair da página.
+# -----------------------------------------------------------------
+@st.fragment(run_every=30)
+def placar():
+    if not os.path.exists(ARQUIVO_RESULTADO):
+        st.markdown(
+            '<div class="tv-empty">Nenhum resultado publicado ainda.</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
     with open(ARQUIVO_RESULTADO, "r", encoding="utf-8") as f:
         resultado = json.load(f)
 
@@ -141,11 +145,11 @@ else:
 
     linhas_html = ""
     for item in resultado["ranking"]:
-        # -----------------------------------------------------------------
+        # -------------------------------------------------------------
         # Se o resultado publicado tiver a coluna "Atingiu Meta" (planilhas
         # que possuem a coluna "Empresa"), o nome do aquecedor aparece em
         # verde com um ✅ quando ele bateu a meta da empresa dele.
-        # -----------------------------------------------------------------
+        # -------------------------------------------------------------
         atingiu = bool(item.get("Atingiu Meta"))
         classe_nome = "tv-name meta-atingida" if atingiu else "tv-name"
 
@@ -160,3 +164,6 @@ else:
         """
 
     st.markdown(linhas_html, unsafe_allow_html=True)
+
+
+placar()
