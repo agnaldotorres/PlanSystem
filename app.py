@@ -1,271 +1,1059 @@
 import streamlit as st
 import pandas as pd
-import re
-import json
-import os
-import unicodedata
-from datetime import datetime
-from zoneinfo import ZoneInfo
+import plotly.express as px
 
 
-def normalizar(texto):
-    """Remove acentos, espaços extras e deixa em maiúsculas, para comparar
-    textos de forma robusta (ex: 'Prospecção Feirão' == 'PROSPECCAO FEIRAO')."""
-    texto = str(texto).strip().upper()
-    texto = unicodedata.normalize("NFKD", texto)
-    texto = "".join(c for c in texto if not unicodedata.combining(c))
-    return texto
-
-
-# -----------------------------------------------------------------
-# Metas por empresa. A comparação ignora acento/maiúscula/espaço.
-#
-# Para cada empresa, listamos "palavras-chave" que identificam ela no
-# texto da coluna "Empresa" da planilha:
-#   - Se a palavra-chave tiver mais de uma palavra (ex: "VIVA VOLKS"),
-#     a frase inteira precisa aparecer dentro do texto da célula.
-#   - Se for uma palavra só (ex: "FORD", "MG"), ela precisa bater com
-#     uma palavra INTEIRA do texto, para não confundir com outro nome
-#     que apenas contenha essas letras por acaso.
-#
-# Ajuste as palavras-chave abaixo para bater exatamente com o que
-# aparece na coluna "Empresa" da sua planilha.
-# -----------------------------------------------------------------
-METAS = {
-    "MITSUBISHI": (["MITSUBISHI", "AKANE"], 30),
-    "FORD": (["FORD"], 15),
-    "SEMINOVOS": (["SEMINOVOS", "JRCA"], 35),
-    "BYD": (["BYD"], 65),
-    "DENZA": (["DENZA"], 11),
-    "VIVA VOLKS": (["VIVA VOLKS", "VOLKSWAGEN", "VW"], 30),
-    "BAJAJ": (["BAJAJ"], 30),
-    "NIKAI": (["NIKAI"], 35),
-    "TRIUMPH": (["TRIUMPH"], 14),
-    "MG": (["MG"], 14),
-}
-
-
-def obter_meta(empresa):
-    """Recebe o texto da coluna Empresa e devolve (nome_padronizado, meta)
-    ou (None, None) se não reconhecer a empresa."""
-    if pd.isna(empresa) or not str(empresa).strip():
-        return None, None
-    texto = normalizar(empresa)
-    tokens = set(texto.split())
-    for chave, (palavras, meta) in METAS.items():
-        for p in palavras:
-            p_norm = normalizar(p)
-            if " " in p_norm:
-                if p_norm in texto:
-                    return chave, meta
-            else:
-                if p_norm in tokens:
-                    return chave, meta
-    return None, None
-
+# ============================================================
+# CONFIGURAÇÃO
+# ============================================================
 
 st.set_page_config(
-    page_title="Ranking de Visita em Loja - Admin",
-    page_icon="🔥",
+    page_title="Mergulho por Aquecimento",
+    page_icon="📊",
     layout="wide"
 )
 
-# -----------------------------------------------------------------
-# Onde o resultado processado é salvo. A página pública (em
-# pages/1_Painel_Publico.py) lê esse mesmo arquivo.
-# -----------------------------------------------------------------
-PASTA_DADOS = os.path.join(os.path.dirname(__file__), "dados")
-ARQUIVO_RESULTADO = os.path.join(PASTA_DADOS, "ultimo_resultado.json")
-FUSO = ZoneInfo("America/Maceio")
 
-os.makedirs(PASTA_DADOS, exist_ok=True)
+# ============================================================
+# CSS
+# ============================================================
 
-st.title("🔥 Ranking de Aquecimento — Admin")
+st.markdown("""
+<style>
 
-st.write(
-    "Envie uma planilha para contar os aquecedores dos clientes com visita agendada. "
-    "Ao processar, o resultado é publicado automaticamente no **Painel Público** "
-    "(veja o menu à esquerda) para seus usuários."
-)
+.stApp {
+    background-color: #f5f7fa;
+}
 
-arquivo = st.file_uploader(
-    "📁 Selecione sua planilha Excel",
+.main .block-container {
+    max-width: 1600px;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+
+/* Títulos */
+
+h1, h2, h3 {
+    color: #111827;
+}
+
+/* Sidebar */
+
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+}
+
+section[data-testid="stSidebar"] > div {
+    padding-top: 2rem;
+}
+
+/* Header */
+
+.dashboard-header {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 25px 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-badge {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.dashboard-header p {
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 15px;
+}
+
+.header-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+}
+
+/* Cards */
+
+.metric-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.035);
+    min-height: 120px;
+}
+
+.metric-title {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.metric-value {
+    color: #111827;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.metric-description {
+    color: #9ca3af;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Navegação */
+
+div[role="radiogroup"] {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    padding: 6px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+/* Tabelas */
+
+[data-testid="stDataFrame"] {
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+/* Upload */
+
+[data-testid="stFileUploader"] {
+    background: #ffffff;
+    border-radius: 12px;
+}
+
+/* Botões */
+
+button {
+    border-radius: 8px !important;
+}
+
+/* Scroll */
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# HEADER
+# ============================================================
+
+st.markdown("""
+<div class="dashboard-header">
+
+    <div class="header-content">
+
+        <div>
+
+            <div class="header-badge">
+                PAINEL COMERCIAL
+            </div>
+
+            <h1>
+                Mergulho por Aquecimento
+            </h1>
+
+            <p>
+                Análise de visitas realizadas, aquecimento,
+                vendedores e eventos comerciais.
+            </p>
+
+        </div>
+
+        <div class="header-status">
+
+            <span class="status-dot"></span>
+
+            Sistema ativo
+
+        </div>
+
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# UPLOAD
+# ============================================================
+
+st.sidebar.title("⚙️ Configurações")
+
+arquivo = st.sidebar.file_uploader(
+    "Lançar planilha",
     type=["xlsx", "xls"]
 )
 
-if arquivo is not None:
 
-    # -----------------------------------------------------------------
-    # Descobrir automaticamente em qual linha está o cabeçalho real,
-    # pois esta planilha tem título/linha em branco antes dele.
-    # -----------------------------------------------------------------
-    bruto = pd.read_excel(arquivo, header=None, nrows=15)
+if arquivo is None:
 
-    linha_cabecalho = None
-    for i, linha in bruto.iterrows():
-        valores = [str(v).strip().lower() for v in linha.tolist()]
-        if any("visita agendada" in v for v in valores) and any(
-            v == "aquecimento" for v in valores
-        ):
-            linha_cabecalho = i
-            break
+    st.info(
+        "📂 Envie a planilha **Mergulho Por Aquecimento** "
+        "para carregar os dados."
+    )
 
-    if linha_cabecalho is None:
-        linha_cabecalho = 0
+    st.stop()
 
-    arquivo.seek(0)
-    df = pd.read_excel(arquivo, header=linha_cabecalho)
 
-    df.columns = [
-        re.sub(r"\s+", " ", str(col)).strip()
-        for col in df.columns
+# ============================================================
+# LEITURA DA PLANILHA
+# ============================================================
+
+try:
+
+    # A planilha possui informações antes do cabeçalho.
+    # O cabeçalho real começa na terceira linha.
+    df = pd.read_excel(
+        arquivo,
+        header=2
+    )
+
+except Exception as e:
+
+    st.error(
+        f"Erro ao carregar a planilha: {e}"
+    )
+
+    st.stop()
+
+
+# ============================================================
+# LIMPEZA DOS NOMES DAS COLUNAS
+# ============================================================
+
+df.columns = (
+    df.columns
+    .astype(str)
+    .str.replace("\n", " ", regex=False)
+    .str.replace(r"\s+", " ", regex=True)
+    .str.strip()
+)
+
+
+# ============================================================
+# GARANTIR COLUNAS IMPORTANTES
+# ============================================================
+
+colunas_necessarias = [
+    "Evento",
+    "Cliente",
+    "Data Inclusão",
+    "Tipo Evento",
+    "Status",
+    "Empresa",
+    "Temperatura",
+    "Mídia",
+    "Etapa Funil",
+    "Visita Agendada",
+    "Visita Realizada",
+    "Aquecido",
+    "Aquecimento",
+    "Vendedor"
+]
+
+colunas_existentes = [
+    coluna
+    for coluna in colunas_necessarias
+    if coluna in df.columns
+]
+
+if "Evento" not in df.columns:
+
+    st.error(
+        "A coluna **Evento** não foi encontrada na planilha."
+    )
+
+    st.stop()
+
+
+# ============================================================
+# LIMPEZA DOS DADOS
+# ============================================================
+
+for coluna in df.columns:
+
+    if df[coluna].dtype == "object":
+
+        df[coluna] = (
+            df[coluna]
+            .astype(str)
+            .str.strip()
+        )
+
+
+# ============================================================
+# CONVERSÃO DE DATAS
+# ============================================================
+
+if "Data Inclusão" in df.columns:
+
+    df["Data Inclusão"] = pd.to_datetime(
+        df["Data Inclusão"],
+        errors="coerce"
+    )
+
+
+# ============================================================
+# NORMALIZAÇÃO DA VISITA REALIZADA
+# ============================================================
+
+if "Visita Realizada" in df.columns:
+
+    df["Visita Realizada"] = (
+        df["Visita Realizada"]
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+
+
+# ============================================================
+# REGRA PRINCIPAL
+# ============================================================
+#
+# REGRA:
+# UMA VISITA POR EVENTO
+#
+# Exemplo:
+#
+# Evento 123
+# SIM
+# SIM
+#
+# Resultado:
+#
+# Evento 123 = 1 visita
+#
+# ============================================================
+
+if "Visita Realizada" in df.columns:
+
+    df_visitas = df[
+        df["Visita Realizada"] == "SIM"
+    ].copy()
+
+else:
+
+    df_visitas = pd.DataFrame()
+
+
+# ============================================================
+# REMOVER EVENTOS DUPLICADOS
+# ============================================================
+
+if not df_visitas.empty:
+
+    # Remove linhas sem Evento
+    df_visitas = df_visitas[
+        df_visitas["Evento"].notna()
+    ].copy()
+
+    # Remove eventos vazios
+    df_visitas = df_visitas[
+        df_visitas["Evento"].astype(str).str.strip() != ""
+    ].copy()
+
+    # --------------------------------------------------------
+    # REGRA:
+    # UM EVENTO = UMA VISITA
+    # --------------------------------------------------------
+
+    df_visitas = df_visitas.drop_duplicates(
+        subset=["Evento"],
+        keep="first"
+    ).copy()
+
+
+# ============================================================
+# FILTROS
+# ============================================================
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("🔎 Filtros")
+
+
+def criar_filtro(
+    dataframe,
+    coluna,
+    titulo
+):
+
+    if coluna not in dataframe.columns:
+
+        return dataframe
+
+    valores = sorted(
+        dataframe[coluna]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+
+    selecionados = st.sidebar.multiselect(
+        titulo,
+        valores
+    )
+
+    if selecionados:
+
+        dataframe = dataframe[
+            dataframe[coluna]
+            .astype(str)
+            .isin(selecionados)
+        ]
+
+    return dataframe
+
+
+# Aplicar filtros SOMENTE depois da deduplicação
+df_filtrado = df_visitas.copy()
+
+
+df_filtrado = criar_filtro(
+    df_filtrado,
+    "Empresa",
+    "Empresa"
+)
+
+
+df_filtrado = criar_filtro(
+    df_filtrado,
+    "Aquecimento",
+    "Aquecimento"
+)
+
+
+df_filtrado = criar_filtro(
+    df_filtrado,
+    "Vendedor",
+    "Vendedor"
+)
+
+
+df_filtrado = criar_filtro(
+    df_filtrado,
+    "Mídia",
+    "Mídia"
+)
+
+
+df_filtrado = criar_filtro(
+    df_filtrado,
+    "Tipo Evento",
+    "Tipo de Evento"
+)
+
+
+df_filtrado = criar_filtro(
+    df_filtrado,
+    "Temperatura",
+    "Temperatura"
+)
+
+
+# ============================================================
+# NAVEGAÇÃO
+# ============================================================
+
+pagina = st.radio(
+    "Navegação",
+    [
+        "📊 Visão Geral",
+        "🔥 Aquecimento",
+        "👥 Vendedores",
+        "📅 Eventos",
+        "📋 Dados"
+    ],
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+
+# ============================================================
+# MÉTRICAS
+# ============================================================
+
+total_eventos = df_filtrado["Evento"].nunique()
+
+
+if "Cliente" in df_filtrado.columns:
+
+    total_clientes = df_filtrado["Cliente"].nunique()
+
+else:
+
+    total_clientes = 0
+
+
+if "Vendedor" in df_filtrado.columns:
+
+    total_vendedores = (
+        df_filtrado["Vendedor"]
+        .replace(
+            ["", "nan", "None"],
+            pd.NA
+        )
+        .dropna()
+        .nunique()
+    )
+
+else:
+
+    total_vendedores = 0
+
+
+if "Aquecimento" in df_filtrado.columns:
+
+    total_aquecimentos = (
+        df_filtrado["Aquecimento"]
+        .replace(
+            ["", "nan", "None"],
+            pd.NA
+        )
+        .dropna()
+        .nunique()
+    )
+
+else:
+
+    total_aquecimentos = 0
+
+
+# ============================================================
+# FUNÇÃO DE CARD
+# ============================================================
+
+def card(
+    titulo,
+    valor,
+    descricao=""
+):
+
+    st.markdown(
+        f"""
+        <div class="metric-card">
+
+            <div class="metric-title">
+                {titulo}
+            </div>
+
+            <div class="metric-value">
+                {valor:,}
+            </div>
+
+            <div class="metric-description">
+                {descricao}
+            </div>
+
+        </div>
+        """.replace(",", "."),
+        unsafe_allow_html=True
+    )
+
+
+# ============================================================
+# VISÃO GERAL
+# ============================================================
+
+if pagina == "📊 Visão Geral":
+
+    st.subheader("Visão Geral")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+
+        card(
+            "Visitas realizadas",
+            total_eventos,
+            "Eventos únicos"
+        )
+
+    with col2:
+
+        card(
+            "Clientes",
+            total_clientes,
+            "Clientes únicos"
+        )
+
+    with col3:
+
+        card(
+            "Vendedores",
+            total_vendedores,
+            "Vendedores envolvidos"
+        )
+
+    with col4:
+
+        card(
+            "Aquecimentos",
+            total_aquecimentos,
+            "Tipos de aquecimento"
+        )
+
+
+    st.markdown("---")
+
+
+    col1, col2 = st.columns(2)
+
+
+    # --------------------------------------------------------
+    # AQUECIMENTOS
+    # --------------------------------------------------------
+
+    with col1:
+
+        if "Aquecimento" in df_filtrado.columns:
+
+            dados = (
+                df_filtrado[
+                    df_filtrado["Aquecimento"]
+                    .notna()
+                ]
+                .groupby("Aquecimento")
+                .size()
+                .reset_index(name="Visitas")
+                .sort_values(
+                    "Visitas",
+                    ascending=False
+                )
+            )
+
+            if not dados.empty:
+
+                fig = px.bar(
+                    dados,
+                    x="Aquecimento",
+                    y="Visitas",
+                    title="Visitas por Aquecimento",
+                    text="Visitas"
+                )
+
+                fig.update_layout(
+                    xaxis_title="Aquecimento",
+                    yaxis_title="Visitas",
+                    plot_bgcolor="white",
+                    paper_bgcolor="white"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+
+    # --------------------------------------------------------
+    # VENDEDORES
+    # --------------------------------------------------------
+
+    with col2:
+
+        if "Vendedor" in df_filtrado.columns:
+
+            dados = (
+                df_filtrado[
+                    df_filtrado["Vendedor"]
+                    .notna()
+                ]
+                .groupby("Vendedor")
+                .size()
+                .reset_index(name="Visitas")
+                .sort_values(
+                    "Visitas",
+                    ascending=False
+                )
+                .head(15)
+            )
+
+            if not dados.empty:
+
+                fig = px.bar(
+                    dados,
+                    x="Visitas",
+                    y="Vendedor",
+                    orientation="h",
+                    title="Visitas por Vendedor",
+                    text="Visitas"
+                )
+
+                fig.update_layout(
+                    plot_bgcolor="white",
+                    paper_bgcolor="white"
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True
+                )
+
+
+# ============================================================
+# AQUECIMENTO
+# ============================================================
+
+elif pagina == "🔥 Aquecimento":
+
+    st.subheader("Análise por Aquecimento")
+
+
+    if "Aquecimento" in df_filtrado.columns:
+
+        dados = (
+            df_filtrado
+            .groupby("Aquecimento")
+            .agg(
+                Visitas=("Evento", "nunique")
+            )
+            .reset_index()
+            .sort_values(
+                "Visitas",
+                ascending=False
+            )
+        )
+
+        st.dataframe(
+            dados,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
+        fig = px.bar(
+            dados,
+            x="Aquecimento",
+            y="Visitas",
+            text="Visitas",
+            title="Ranking de Aquecimentos"
+        )
+
+        fig.update_layout(
+            plot_bgcolor="white",
+            paper_bgcolor="white"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+
+# ============================================================
+# VENDEDORES
+# ============================================================
+
+elif pagina == "👥 Vendedores":
+
+    st.subheader("Performance dos Vendedores")
+
+
+    if "Vendedor" in df_filtrado.columns:
+
+        ranking = (
+            df_filtrado
+            .groupby("Vendedor")
+            .agg(
+                Visitas=("Evento", "nunique"),
+                Clientes=("Cliente", "nunique")
+            )
+            .reset_index()
+            .sort_values(
+                "Visitas",
+                ascending=False
+            )
+        )
+
+
+        ranking["Participação"] = (
+            ranking["Visitas"]
+            / ranking["Visitas"].sum()
+            * 100
+        ).round(2)
+
+
+        st.dataframe(
+            ranking,
+            use_container_width=True,
+            hide_index=True
+        )
+
+
+        fig = px.bar(
+            ranking.head(20),
+            x="Visitas",
+            y="Vendedor",
+            orientation="h",
+            text="Visitas",
+            title="Ranking de Vendedores"
+        )
+
+        fig.update_layout(
+            plot_bgcolor="white",
+            paper_bgcolor="white"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+
+# ============================================================
+# EVENTOS
+# ============================================================
+
+elif pagina == "📅 Eventos":
+
+    st.subheader("Eventos / Visitas")
+
+    st.info(
+        "Cada Evento é considerado apenas uma vez, "
+        "mesmo que apareça repetido na planilha."
+    )
+
+
+    colunas_exibicao = [
+        "Evento",
+        "Cliente",
+        "Data Inclusão",
+        "Tipo Evento",
+        "Empresa",
+        "Temperatura",
+        "Mídia",
+        "Etapa Funil",
+        "Visita Agendada",
+        "Visita Realizada",
+        "Aquecido",
+        "Aquecimento",
+        "Vendedor"
     ]
 
-    st.success("Planilha carregada com sucesso! ✅")
 
-    coluna_agendada = None
-    coluna_aquecimento = None
-    coluna_tipo_evento = None
-    coluna_empresa = None
+    colunas_exibicao = [
+        coluna
+        for coluna in colunas_exibicao
+        if coluna in df_filtrado.columns
+    ]
 
-    for coluna in df.columns:
-        nome = normalizar(coluna)
-        if nome == "VISITA AGENDADA":
-            coluna_agendada = coluna
-        if nome == "AQUECIMENTO":
-            coluna_aquecimento = coluna
-        if "TIPO EVENTO" in nome or "TIPO DE EVENTO" in nome:
-            coluna_tipo_evento = coluna
-        if nome == "EMPRESA":
-            coluna_empresa = coluna
 
-    if coluna_tipo_evento is None:
-        st.warning(
-            "⚠️ Não encontrei a coluna 'Tipo Evento' nesta planilha — "
-            "o filtro de 'PROSPECÇÃO FEIRÃO' não será aplicado. "
-            "Colunas encontradas: " + ", ".join(df.columns.tolist())
+    tabela = df_filtrado[
+        colunas_exibicao
+    ].copy()
+
+
+    st.dataframe(
+        tabela,
+        use_container_width=True,
+        hide_index=True
+    )
+
+
+# ============================================================
+# DADOS
+# ============================================================
+
+elif pagina == "📋 Dados":
+
+    st.subheader("Dados e validação")
+
+
+    # --------------------------------------------------------
+    # COMPARAÇÃO ANTES / DEPOIS
+    # --------------------------------------------------------
+
+    if "Visita Realizada" in df.columns:
+
+        registros_visita = len(
+            df[
+                df["Visita Realizada"] == "SIM"
+            ]
         )
-
-    if coluna_empresa is None:
-        st.warning(
-            "⚠️ Não encontrei a coluna 'Empresa' nesta planilha — "
-            "o destaque de metas não será aplicado."
-        )
-
-    if coluna_agendada is None or coluna_aquecimento is None:
-
-        st.error("❌ Não consegui identificar as colunas necessárias.")
-        st.write("### Colunas encontradas na planilha:")
-        st.write(df.columns.tolist())
 
     else:
 
-        df_filtrado = df[
-            df[coluna_agendada]
-            .astype(str)
-            .str.strip()
-            .str.upper() == "SIM"
+        registros_visita = 0
+
+
+    eventos_unicos = df_visitas[
+        "Evento"
+    ].nunique()
+
+
+    duplicados_removidos = (
+        registros_visita
+        - eventos_unicos
+    )
+
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        card(
+            "Registros de visita",
+            registros_visita,
+            "Linhas com Visita Realizada = SIM"
+        )
+
+
+    with col2:
+
+        card(
+            "Eventos únicos",
+            eventos_unicos,
+            "Regra de 1 visita por evento"
+        )
+
+
+    with col3:
+
+        card(
+            "Duplicidades removidas",
+            duplicados_removidos,
+            "Registros desconsiderados"
+        )
+
+
+    st.markdown("---")
+
+
+    # --------------------------------------------------------
+    # DUPLICADOS
+    # --------------------------------------------------------
+
+    st.subheader(
+        "🔎 Eventos que estavam duplicados"
+    )
+
+
+    if "Visita Realizada" in df.columns:
+
+        visitas_originais = df[
+            df["Visita Realizada"] == "SIM"
         ].copy()
 
-        # -----------------------------------------------------------------
-        # Não contabilizar linhas cujo "Tipo Evento" seja "PROSPECCAO FEIRAO"
-        # (comparação ignora acento, maiúscula/minúscula e espaços extras).
-        # Regra confirmada: só exclui FEIRÃO, mantém CRM contabilizado.
-        # -----------------------------------------------------------------
-        if coluna_tipo_evento is not None:
-            df_filtrado = df_filtrado[
-                df_filtrado[coluna_tipo_evento].apply(normalizar) != "PROSPECCAO FEIRAO"
-            ]
 
-        df_filtrado = df_filtrado.dropna(subset=[coluna_aquecimento])
-
-        df_filtrado[coluna_aquecimento] = (
-            df_filtrado[coluna_aquecimento]
-            .astype(str)
-            .str.strip()
+        contagem_eventos = (
+            visitas_originais
+            .groupby("Evento")
+            .size()
+            .reset_index(
+                name="Quantidade de registros"
+            )
         )
 
-        ranking = (
-            df_filtrado[coluna_aquecimento]
-            .value_counts()
-            .reset_index()
+
+        duplicados = contagem_eventos[
+            contagem_eventos[
+                "Quantidade de registros"
+            ] > 1
+        ].sort_values(
+            "Quantidade de registros",
+            ascending=False
         )
-        ranking.columns = ["Aquecedor", "Quantidade"]
-        ranking.index = ranking.index + 1
-        ranking.index.name = "Posição"
 
-        # -----------------------------------------------------------------
-        # Descobrir a empresa de cada aquecedor (pega a mais frequente,
-        # caso existam inconsistências na planilha) e comparar a
-        # quantidade de visitas dele com a meta daquela empresa.
-        # -----------------------------------------------------------------
-        if coluna_empresa is not None:
-            empresa_por_aquecedor = df_filtrado.groupby(coluna_aquecimento)[coluna_empresa].agg(
-                lambda s: s.mode().iat[0] if not s.mode().empty else None
+
+        if not duplicados.empty:
+
+            st.warning(
+                f"Foram encontrados "
+                f"**{len(duplicados)} eventos duplicados**. "
+                f"Todos passam a contar como uma única visita."
             )
 
-            ranking["Empresa"] = ranking["Aquecedor"].map(empresa_por_aquecedor)
-
-            metas_info = ranking["Empresa"].apply(obter_meta)
-            ranking["Meta"] = metas_info.apply(lambda x: x[1])
-            ranking["Atingiu Meta"] = ranking.apply(
-                lambda r: bool(pd.notna(r["Meta"]) and r["Quantidade"] >= r["Meta"]),
-                axis=1,
-            )
-
-            nao_reconhecidos = ranking.loc[ranking["Meta"].isna(), "Empresa"].dropna().unique()
-            if len(nao_reconhecidos) > 0:
-                st.warning(
-                    "⚠️ Não reconheci a meta destas empresas (ajuste o dicionário METAS): "
-                    + ", ".join(map(str, nao_reconhecidos))
-                )
-
-        # Métricas
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("📅 Total de Visitas Agendadas", len(df_filtrado))
-        with col2:
-            st.metric("🔥 Total de Aquecedores", len(ranking))
-
-        st.subheader("🏆 Ranking dos Aquecedores")
-
-        if "Atingiu Meta" in ranking.columns:
-
-            def destacar_meta(row):
-                estilos = [""] * len(row)
-                if row.get("Atingiu Meta"):
-                    idx = row.index.get_loc("Aquecedor")
-                    estilos[idx] = "color: #16a34a; font-weight: 800;"
-                return estilos
 
             st.dataframe(
-                ranking.style.apply(destacar_meta, axis=1),
-                width="stretch",
+                duplicados,
+                use_container_width=True,
+                hide_index=True
             )
+
         else:
-            st.dataframe(ranking, width="stretch")
 
-        st.subheader("📊 Visitas Agendadas por Aquecedor")
-        st.bar_chart(ranking.set_index("Aquecedor")["Quantidade"])
+            st.success(
+                "Nenhum evento duplicado encontrado."
+            )
 
-        # -----------------------------------------------------------------
-        # Salvar o resultado + data/hora da atualização para a página
-        # pública ler. Isso é o que "publica" a atualização para os
-        # usuários automaticamente.
-        # -----------------------------------------------------------------
-        agora = datetime.now(FUSO)
 
-        resultado = {
-            "atualizado_em": agora.strftime("%d/%m/%Y %H:%M:%S"),
-            "total_visitas_agendadas": int(len(df_filtrado)),
-            "total_aquecedores": int(len(ranking)),
-            "ranking": ranking.reset_index().to_dict(orient="records"),
-        }
+    st.markdown("---")
 
-        with open(ARQUIVO_RESULTADO, "w", encoding="utf-8") as f:
-            json.dump(resultado, f, ensure_ascii=False, indent=2)
 
-        st.info(
-            f"📤 Painel público atualizado em **{resultado['atualizado_em']}**. "
-            "Seus usuários já verão os novos números."
-        )
+    # --------------------------------------------------------
+    # BASE FINAL
+    # --------------------------------------------------------
+
+    st.subheader(
+        "Base utilizada pelo painel"
+    )
+
+
+    st.caption(
+        f"{len(df_filtrado):,} registros após filtros e "
+        f"deduplicação por Evento."
+    )
+
+
+    st.dataframe(
+        df_filtrado,
+        use_container_width=True,
+        hide_index=True
+    )
