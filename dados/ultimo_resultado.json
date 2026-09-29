@@ -1,246 +1,217 @@
 {
-  "atualizado_em": "01/09/2026 17:14:34",
-  "total_visitas_agendadas": 472,
-  "total_aquecedores": 30,
+  "atualizado_em": "29/09/2026 12:09:04",
+  "total_visitas_agendadas": 302,
+  "total_visitas_unicas": 302,
+  "total_aquecedores": 26,
+  "registros_antes_deduplicacao": 368,
+  "duplicados_removidos": 66,
   "ranking": [
     {
       "Posição": 1,
-      "Aquecedor": "[CND] ELAINE.ATAIDE",
-      "Quantidade": 54,
-      "Empresa": "Viva Volks",
-      "Meta": 30,
-      "Atingiu Meta": true
+      "Aquecedor": "[CND] WESLEY.DAVI",
+      "Quantidade": 32,
+      "Empresa": "JRCA Veículos - Maceió",
+      "Meta": 35,
+      "Atingiu Meta": false
     },
     {
       "Posição": 2,
-      "Aquecedor": "[CND] BRENO.AZEVEDO",
-      "Quantidade": 48,
-      "Empresa": "Nikai Maceió",
-      "Meta": 35,
-      "Atingiu Meta": true
-    },
-    {
-      "Posição": 3,
-      "Aquecedor": "[CND] ERICK.TAVARES",
-      "Quantidade": 48,
-      "Empresa": "MG - Maceio",
-      "Meta": 14,
-      "Atingiu Meta": true
-    },
-    {
-      "Posição": 4,
-      "Aquecedor": "[CND] LUCAS.SANTOS",
-      "Quantidade": 36,
-      "Empresa": "Nikai Maceió",
-      "Meta": 35,
-      "Atingiu Meta": true
-    },
-    {
-      "Posição": 5,
-      "Aquecedor": "[CND] JORGE.ALBUQUERQUE",
-      "Quantidade": 33,
-      "Empresa": "JRCA Veículos - Maceió",
-      "Meta": 35,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 6,
-      "Aquecedor": "[CND] ADRIELY.AQUINO",
-      "Quantidade": 32,
-      "Empresa": "Akane Maceió",
-      "Meta": 30,
-      "Atingiu Meta": true
-    },
-    {
-      "Posição": 7,
-      "Aquecedor": "[CND] WESLEY.DAVI",
-      "Quantidade": 29,
-      "Empresa": "JRCA Veículos - Maceió",
-      "Meta": 35,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 8,
       "Aquecedor": "[CND] ALICE KELLY",
-      "Quantidade": 24,
-      "Empresa": "BYD - Arapiraca",
-      "Meta": 65,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 9,
-      "Aquecedor": "[CND] ELIZA.BETH",
-      "Quantidade": 23,
+      "Quantidade": 30,
       "Empresa": "BYD Farol - Maceió",
       "Meta": 65,
       "Atingiu Meta": false
     },
     {
-      "Posição": 10,
-      "Aquecedor": "[CND] LYS.GUEDES",
-      "Quantidade": 17,
-      "Empresa": "Bajaj - Maceio",
+      "Posição": 3,
+      "Aquecedor": "[CND] BRENO.AZEVEDO",
+      "Quantidade": 30,
+      "Empresa": "Nikai Maceió",
+      "Meta": 35,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 4,
+      "Aquecedor": "[CND] ALEXIA.CAUANE",
+      "Quantidade": 24,
+      "Empresa": "Bajaj - João Pessoa",
       "Meta": 30,
       "Atingiu Meta": false
     },
     {
-      "Posição": 11,
-      "Aquecedor": "[CND] JOAO.MATHEUS",
-      "Quantidade": 16,
-      "Empresa": "Bajaj - Petrolina",
-      "Meta": 30,
+      "Posição": 5,
+      "Aquecedor": "[CND] LUCAS.SANTOS",
+      "Quantidade": 23,
+      "Empresa": "Nikai Maceió",
+      "Meta": 35,
       "Atingiu Meta": false
     },
     {
-      "Posição": 12,
+      "Posição": 6,
+      "Aquecedor": "[CND] ERICK.TAVARES",
+      "Quantidade": 21,
+      "Empresa": "MG - Maceio",
+      "Meta": 14,
+      "Atingiu Meta": true
+    },
+    {
+      "Posição": 7,
       "Aquecedor": "[CND] CLAUDIO.SANTOS",
-      "Quantidade": 15,
+      "Quantidade": 18,
       "Empresa": "Ford - Parnamirim",
       "Meta": 15,
       "Atingiu Meta": true
     },
     {
+      "Posição": 8,
+      "Aquecedor": "[ V ] ADRIELY.AQUINO",
+      "Quantidade": 14,
+      "Empresa": "Akane Maceió",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 9,
+      "Aquecedor": "[CND] ELAINE.ATAIDE",
+      "Quantidade": 14,
+      "Empresa": "Viva Volks",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 10,
+      "Aquecedor": "[CND] YRIS.SILVA",
+      "Quantidade": 14,
+      "Empresa": "Triumph - Maceió",
+      "Meta": 14,
+      "Atingiu Meta": true
+    },
+    {
+      "Posição": 11,
+      "Aquecedor": "[CND] JORGE.ALBUQUERQUE",
+      "Quantidade": 12,
+      "Empresa": "JRCA Veículos - Maceió",
+      "Meta": 35,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 12,
+      "Aquecedor": "[CND] ARTHUR.OLIVEIRA",
+      "Quantidade": 11,
+      "Empresa": "Viva Volks",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
       "Posição": 13,
       "Aquecedor": "[CND] JEAN.OLIVEIRA",
-      "Quantidade": 15,
+      "Quantidade": 9,
       "Empresa": "Bajaj - Maceio",
       "Meta": 30,
       "Atingiu Meta": false
     },
     {
       "Posição": 14,
-      "Aquecedor": "[CND] RAYANE.SILVA",
-      "Quantidade": 11,
-      "Empresa": "Bajaj - Maceio",
-      "Meta": 30,
+      "Aquecedor": "[CND] ELIZA.BETH",
+      "Quantidade": 8,
+      "Empresa": "Denza - Maceió",
+      "Meta": 11,
       "Atingiu Meta": false
     },
     {
       "Posição": 15,
-      "Aquecedor": "[CND] ANA.MARQUES",
-      "Quantidade": 9,
-      "Empresa": "Bajaj - Petrolina",
+      "Aquecedor": "[CND] BRENNOU.SANTOS",
+      "Quantidade": 5,
+      "Empresa": "Bajaj - João Pessoa",
       "Meta": 30,
       "Atingiu Meta": false
     },
     {
       "Posição": 16,
+      "Aquecedor": "[CND] GABRIEL.SILVA",
+      "Quantidade": 5,
+      "Empresa": "JRCA Veículos - Maceió",
+      "Meta": 35,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 17,
+      "Aquecedor": "[CND] JOAO.MATHEUS",
+      "Quantidade": 5,
+      "Empresa": "Bajaj - Petrolina",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 18,
       "Aquecedor": "[CND] LEONARDO.SOUZA",
-      "Quantidade": 8,
+      "Quantidade": 5,
       "Empresa": "Bajaj - Maceio",
       "Meta": 30,
       "Atingiu Meta": false
     },
     {
-      "Posição": 17,
-      "Aquecedor": "[CND] LUANA.LUISA",
-      "Quantidade": 8,
-      "Empresa": "BYD - Maceió",
-      "Meta": 65,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 18,
-      "Aquecedor": "[CND] ALEXIA.CAUANE",
-      "Quantidade": 7,
-      "Empresa": "Bajaj - João Pessoa",
-      "Meta": 30,
-      "Atingiu Meta": false
-    },
-    {
       "Posição": 19,
-      "Aquecedor": "[CND] KETHUELLE.BARBOSA",
-      "Quantidade": 7,
-      "Empresa": "Bajaj - João Pessoa",
-      "Meta": 30,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 20,
-      "Aquecedor": "[CND] ARTHUR.OLIVEIRA",
-      "Quantidade": 6,
-      "Empresa": "Viva Volks",
-      "Meta": 30,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 21,
-      "Aquecedor": "[CND] BRENNOU.SANTOS",
-      "Quantidade": 6,
-      "Empresa": "Triumph - Maceió",
-      "Meta": 14,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 22,
-      "Aquecedor": "[CND] GUSTAVO.PAIVA",
-      "Quantidade": 5,
-      "Empresa": "BYD - Maceió",
-      "Meta": 65,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 23,
-      "Aquecedor": "[ CND ] MIKAELE.KARLA",
+      "Aquecedor": "[CND] ANA.MARQUES",
       "Quantidade": 4,
       "Empresa": "Bajaj - João Pessoa",
       "Meta": 30,
       "Atingiu Meta": false
     },
     {
-      "Posição": 24,
-      "Aquecedor": "[CND] LAYON.SZNITTH",
+      "Posição": 20,
+      "Aquecedor": "[CND] LYS.GUEDES",
+      "Quantidade": 4,
+      "Empresa": "Bajaj - Maceio",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 21,
+      "Aquecedor": "[ CND ] MIKAELE.KARLA",
       "Quantidade": 3,
+      "Empresa": "Bajaj - Petrolina",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 22,
+      "Aquecedor": "[CND] JOAO.CARDOZO",
+      "Quantidade": 3,
+      "Empresa": "Akane Arapiraca",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 23,
+      "Aquecedor": "[CND] RAYANE.SILVA",
+      "Quantidade": 3,
+      "Empresa": "Bajaj - Maceio",
+      "Meta": 30,
+      "Atingiu Meta": false
+    },
+    {
+      "Posição": 24,
+      "Aquecedor": "[CND] ALESSANDRO.SANTOS",
+      "Quantidade": 2,
       "Empresa": "BYD - Maceió",
       "Meta": 65,
       "Atingiu Meta": false
     },
     {
       "Posição": 25,
-      "Aquecedor": "[CND] YRIS.SILVA",
-      "Quantidade": 3,
-      "Empresa": "Triumph - Maceió",
-      "Meta": 14,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 26,
-      "Aquecedor": "[CND] ALESSANDRO.SANTOS",
-      "Quantidade": 1,
-      "Empresa": "BYD - Maceió",
-      "Meta": 65,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 27,
-      "Aquecedor": "[CND] FRANCYNE.GOMES",
-      "Quantidade": 1,
-      "Empresa": "Bajaj - Arapiraca",
-      "Meta": 30,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 28,
-      "Aquecedor": "[CND] JEFFERSON.GOMES",
-      "Quantidade": 1,
+      "Aquecedor": "[CND] KETHUELLE.BARBOSA",
+      "Quantidade": 2,
       "Empresa": "Bajaj - Petrolina",
       "Meta": 30,
       "Atingiu Meta": false
     },
     {
-      "Posição": 29,
-      "Aquecedor": "[CND] KETTYLIN.MARTINS",
+      "Posição": 26,
+      "Aquecedor": "[CND] LUANA.LUISA",
       "Quantidade": 1,
-      "Empresa": "BYD - Maceió",
+      "Empresa": "BYD - Arapiraca",
       "Meta": 65,
-      "Atingiu Meta": false
-    },
-    {
-      "Posição": 30,
-      "Aquecedor": "[SUP] GUILHERME.SOARES",
-      "Quantidade": 1,
-      "Empresa": "JRCA veículos - Arapiraca",
-      "Meta": 35,
       "Atingiu Meta": false
     }
   ]
